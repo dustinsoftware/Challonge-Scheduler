@@ -43,6 +43,10 @@ namespace Challonge
 
 		private void OnTimerElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
 		{
+			if (m_busy)
+				return;
+
+			m_busy = true;
 			Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => StatusEllipse.Fill = new SolidColorBrush(Color.FromRgb(255, 255, 0))));
 
 			IEnumerable<ChallongeClient.Match> matches = m_client.GetMatches();
@@ -52,6 +56,7 @@ namespace Challonge
 			if (openMatches == null || openMatches.Any(x => m_client.GetParticipant(x.player1_id) == null || m_client.GetParticipant(x.player2_id) == null))
 			{
 				Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => StatusEllipse.Fill = new SolidColorBrush(Color.FromRgb(255, 0, 0))));
+				m_busy = false;
 				return;
 			}
 
@@ -87,10 +92,14 @@ namespace Challonge
 				Matches.Text = string.Join(Environment.NewLine, items);
 				StatusEllipse.Fill = new SolidColorBrush(Color.FromRgb(0, 255, 0));
 			}), matchStrings);
+
+			m_busy = false;
 		}
 
 		readonly Timer m_timer;
 		readonly ChallongeClient m_client;
 		readonly List<Station> m_stations;
+
+		bool m_busy;
 	}
 }
