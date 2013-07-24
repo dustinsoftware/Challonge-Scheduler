@@ -31,7 +31,7 @@ namespace Challonge
 			m_timer.Start();
 
 			m_stations = Enumerable.Range(0, Settings.Default.Stations)
-				.Select(x => new Station())
+				.Select((x, i) => new Station { Id = i + 1 })
 				.ToList();
 		}
 
@@ -71,12 +71,12 @@ namespace Challonge
 			foreach (var station in m_stations.Where(x => x.Match == null).TakeWhile(x => waitingMatches.Count != 0))
 				station.Match = waitingMatches.Dequeue();
 
-			List<string> matchStrings = m_stations.Select((station, i) =>
+			List<string> matchStrings = m_stations.Select(station =>
 				{
 					if (station.Match == null)
-						return string.Format("Station {0}: Not scheduled.", i + 1);
+						return string.Format("Station {0}: Not scheduled.", station.Id);
 
-					return string.Format("Station {0} - Round {1}: {2} vs {3}", i + 1,
+					return string.Format("Station {0} - Round {1}: {2} vs {3}", station.Id,
 						station.Match.round < 0 ? "L" + Math.Abs(station.Match.round) : "W" + station.Match.round,
 						m_client.GetParticipant(station.Match.player1_id).name,
 						m_client.GetParticipant(station.Match.player2_id).name
