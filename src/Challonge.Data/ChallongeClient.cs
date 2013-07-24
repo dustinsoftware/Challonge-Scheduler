@@ -17,9 +17,9 @@ namespace Challonge.Data
 			m_participants = new Dictionary<int, Participant>();
 		}
 
-		public IEnumerable<Match> GetMatches()
+		public IEnumerable<Match> GetMatches(string state)
 		{
-			var result = m_client.Get<List<MatchResult>>(new RestRequest("matches.json?state=open" + s_apiKeyString));
+			var result = m_client.Get<List<MatchResult>>(new RestRequest(string.Format("matches.json?state={0}", state) + s_apiKeyString));
 			return result.ResponseStatus != ResponseStatus.Completed ?
 				null :
 				result.Data.Select(x => x.match);

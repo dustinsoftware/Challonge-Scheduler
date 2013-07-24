@@ -49,7 +49,7 @@ namespace Challonge
 			m_busy = true;
 			Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => StatusEllipse.Fill = new SolidColorBrush(Color.FromRgb(255, 255, 0))));
 
-			IEnumerable<ChallongeClient.Match> matches = m_client.GetMatches();
+			IEnumerable<ChallongeClient.Match> matches = m_client.GetMatches("open");
 			ReadOnlyCollection<ChallongeClient.Match> openMatches = matches == null ? null : new ReadOnlyCollection<ChallongeClient.Match>(matches
 				.OrderBy(x => x.started_at).ToList());
 
