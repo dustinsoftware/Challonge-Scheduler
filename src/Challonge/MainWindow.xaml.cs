@@ -76,13 +76,15 @@ namespace Challonge
 					if (station.Match == null)
 						return string.Format("Station {0}: Not scheduled.", i + 1);
 
-					return string.Format("Station {0}: {1} vs {2}", i + 1,
+					return string.Format("Station {0} - Round {1}: {2} vs {3}", i + 1,
+						station.Match.round < 0 ? "L" + Math.Abs(station.Match.round) : "W" + station.Match.round,
 						m_client.GetParticipant(station.Match.player1_id).name,
 						m_client.GetParticipant(station.Match.player2_id).name
 						);
 				}).Concat(new[] { "", "Next up:" })
 				.Concat(waitingMatches
-					.Select(x => string.Format("{0} vs {1}",
+					.Select(x => string.Format("Round {0}: {1} vs {2}",
+						x.round < 0 ? "L" + Math.Abs(x.round) : "W" + x.round,
 						m_client.GetParticipant(x.player1_id).name,
 						m_client.GetParticipant(x.player2_id).name)))
 				.ToList();
