@@ -49,42 +49,67 @@ namespace Challonge
 			m_busy = true;
 			Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => StatusEllipse.Fill = new SolidColorBrush(Color.FromRgb(255, 255, 0))));
 
-			IEnumerable<ChallongeClient.Match> matches = m_client.GetMatches("open");
-			ReadOnlyCollection<ChallongeClient.Match> openMatches = matches == null ? null : new ReadOnlyCollection<ChallongeClient.Match>(matches
-				.OrderBy(x => x.started_at).ToList());
-
-			if (openMatches == null || openMatches.Any(x => m_client.GetParticipant(x.player1_id) == null || m_client.GetParticipant(x.player2_id) == null))
+			List<ChallongeClient.Match> totalMatches = m_client.GetMatches("all").ToList();
+			if (totalMatches.Count == 0)
 			{
 				Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => StatusEllipse.Fill = new SolidColorBrush(Color.FromRgb(255, 0, 0))));
 				m_busy = false;
 				return;
 			}
 
-			foreach (var completedMatch in m_stations.Where(x => x.Match != null && !openMatches.Select(openMatch => openMatch.id).Contains(x.Match.id)))
+			int winnersFinals = totalMatches.Max(x => x.round);
+			int losersFinals = totalMatches.Min(x => x.round);
+
+			IEnumerable<ChallongeClient.Match> openMatches = m_client.GetMatches("open");
+			ReadOnlyCollection<ChallongeClient.Match> openMatchesCollection = openMatches == null ? null :
+				new ReadOnlyCollection<ChallongeClient.Match>(openMatches
+					.OrderBy(x => x.started_at).ToList());
+
+			if (openMatchesCollection == null || openMatchesCollection.Any(x => m_client.GetParticipant(x.player1_id) == null || m_client.GetParticipant(x.player2_id) == null))
+			{
+				Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => StatusEllipse.Fill = new SolidColorBrush(Color.FromRgb(255, 0, 0))));
+				m_busy = false;
+				return;
+			}
+
+			foreach (var completedMatch in m_stations.Where(x => x.Match != null && !openMatchesCollection.Select(openMatch => openMatch.id).Contains(x.Match.id)))
 				completedMatch.Match = null;
 
-			Queue<ChallongeClient.Match> waitingMatches = new Queue<ChallongeClient.Match>(openMatches
-				.Where(match => !m_stations
+			Queue<ChallongeClient.Match> waitingMatches = new Queue<ChallongeClient.Match>(openMatchesCollection
+				.Where(match => !IsFinalsRound(match.round, winnersFinals, losersFinals) && !m_stations
 					.Where(station => station.Match != null)
 					.Select(station => station.Match.id).Contains(match.id)));
 
 			foreach (var station in m_stations.Where(x => x.Match == null).TakeWhile(x => waitingMatches.Count != 0))
 				station.Match = waitingMatches.Dequeue();
 
+			if (openMatchesCollection.All(x => IsFinalsRound(x.round, winnersFinals, losersFinals)))
+			{
+				// everyone has finished, start playing the finals on the first TV
+				m_stations.First().Match = openMatchesCollection.FirstOrDefault();
+				foreach (var openMatch in openMatchesCollection.Except(new[] { m_stations.First().Match }))
+					waitingMatches.Enqueue(openMatch);
+			}
+			else
+			{
+				foreach (var finalsMatch in openMatchesCollection.Where(x => IsFinalsRound(x.round, winnersFinals, losersFinals)))
+					waitingMatches.Enqueue(finalsMatch);
+			}
+
 			List<string> matchStrings = m_stations.Select(station =>
 				{
 					if (station.Match == null)
-						return string.Format("Station {0}: Not scheduled.", station.Id);
+						return string.Format("Station {0} - Not scheduled.", station.Id);
 
-					return string.Format("Station {0} - Round {1}: {2} vs {3}", station.Id,
-						station.Match.round < 0 ? "L" + Math.Abs(station.Match.round) : "W" + station.Match.round,
+					return string.Format("Station {0} - {1}: {2} vs {3}", station.Id,
+						GetRoundString(station.Match.round, winnersFinals, losersFinals),
 						m_client.GetParticipant(station.Match.player1_id).name,
 						m_client.GetParticipant(station.Match.player2_id).name
 						);
 				}).Concat(new[] { "", "Next up:" })
 				.Concat(waitingMatches
-					.Select(x => string.Format("Round {0}: {1} vs {2}",
-						x.round < 0 ? "L" + Math.Abs(x.round) : "W" + x.round,
+					.Select(x => string.Format("{0}: {1} vs {2}",
+						GetRoundString(x.round, winnersFinals, losersFinals),
 						m_client.GetParticipant(x.player1_id).name,
 						m_client.GetParticipant(x.player2_id).name)))
 				.ToList();
@@ -96,6 +121,27 @@ namespace Challonge
 			}), matchStrings);
 
 			m_busy = false;
+		}
+
+		private static string GetRoundString(int round, int winnersFinals, int losersFinals)
+		{
+			if (round == winnersFinals - 1)
+				return "Winners Finals";
+			if (round == winnersFinals - 2)
+				return "Winners Semis";
+			if (round == losersFinals)
+				return "Losers Finals";
+			if (round == losersFinals + 1 || round == losersFinals + 2)
+				return "Losers Semis";
+			if (round >= winnersFinals)
+				return "Grand Finals";
+
+			return string.Format("Round {0}", round < 0 ? "L" + Math.Abs(round) : "W" + round);
+		}
+
+		private static bool IsFinalsRound(int round, int winnersFinal, int losersFinal)
+		{
+			return round >= winnersFinal - 1 || round <= losersFinal;
 		}
 
 		readonly Timer m_timer;
