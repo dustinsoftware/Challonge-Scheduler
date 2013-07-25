@@ -49,16 +49,17 @@ namespace Challonge
 			m_busy = true;
 			Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => StatusEllipse.Fill = new SolidColorBrush(Color.FromRgb(255, 255, 0))));
 
-			List<ChallongeClient.Match> totalMatches = m_client.GetMatches("all").ToList();
-			if (totalMatches.Count == 0)
+			IEnumerable<ChallongeClient.Match> totalMatches = m_client.GetMatches("all");
+			if (totalMatches == null)
 			{
 				Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => StatusEllipse.Fill = new SolidColorBrush(Color.FromRgb(255, 0, 0))));
 				m_busy = false;
 				return;
 			}
 
-			int winnersFinals = totalMatches.Max(x => x.round);
-			int losersFinals = totalMatches.Min(x => x.round);
+			var totalMatchesCollection = new ReadOnlyCollection<ChallongeClient.Match>(totalMatches.ToList());
+			int winnersFinals = totalMatchesCollection.Max(x => x.round);
+			int losersFinals = totalMatchesCollection.Min(x => x.round);
 
 			IEnumerable<ChallongeClient.Match> openMatches = m_client.GetMatches("open");
 			ReadOnlyCollection<ChallongeClient.Match> openMatchesCollection = openMatches == null ? null :
