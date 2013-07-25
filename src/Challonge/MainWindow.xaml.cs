@@ -139,6 +139,22 @@ namespace Challonge
 			return string.Format("Round {0}", round < 0 ? "L" + Math.Abs(round) : "W" + round);
 		}
 
+		private void StatusEllipse_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		{
+			bool fullScreen = WindowStyle == WindowStyle.None;
+
+			if (fullScreen)
+			{
+				WindowStyle = WindowStyle.SingleBorderWindow;
+				Topmost = false;
+			}
+			else
+			{
+				WindowStyle = WindowStyle.None;
+				Topmost = true;
+			}
+		}
+
 		private static bool IsFinalsRound(int round, int winnersFinal, int losersFinal)
 		{
 			return round >= winnersFinal - 1 || round <= losersFinal;

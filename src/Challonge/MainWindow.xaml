@@ -1,7 +1,7 @@
 ﻿<Window x:Class="Challonge.MainWindow"
 		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		Title="Challonge Scheduler" Height="350" Width="735" WindowState="Maximized">
+		Title="Challonge Scheduler" Height="350" Width="735" WindowState="Maximized" WindowStyle="None" Topmost="True">
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="57*"/>
@@ -13,7 +13,7 @@
 				<GradientStop Color="#FFEAEAEA" Offset="1"/>
 			</LinearGradientBrush>
 		</Grid.Background>
-		<Ellipse x:Name="StatusEllipse" Fill="#FFF4F4F5" Height="57" Margin="0,10,10,0" Stroke="Black" VerticalAlignment="Top" Opacity="0.8" HorizontalAlignment="Right" Width="57" Grid.RowSpan="2"/>
+		<Ellipse x:Name="StatusEllipse" Fill="#FFF4F4F5" Height="57" Margin="0,10,10,0" Stroke="Black" VerticalAlignment="Top" Opacity="0.8" HorizontalAlignment="Right" Width="57" Grid.RowSpan="2" MouseDown="StatusEllipse_MouseDown"/>
 		<Viewbox Grid.RowSpan="2">
 			<TextBlock Margin="10,10,10,10" x:Name="Matches"/>
 		</Viewbox>
