@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using Challonge.Data.Properties;
 using RestSharp;
 
@@ -20,7 +21,7 @@ namespace Challonge.Data
 		public IEnumerable<Match> GetMatches(string state)
 		{
 			var result = m_client.Get<List<MatchResult>>(new RestRequest(string.Format("matches.json?state={0}", state) + s_apiKeyString));
-			return result.ResponseStatus != ResponseStatus.Completed ?
+			return result.ResponseStatus != ResponseStatus.Completed || result.StatusCode != HttpStatusCode.OK ?
 				null :
 				result.Data.Select(x => x.match);
 		}
