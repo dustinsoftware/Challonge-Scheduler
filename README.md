@@ -3,6 +3,7 @@ Challonge Scheduler
 
 ![Screenshot](/screenshot.png)
 
+Download a built version [here](https://docs.google.com/file/d/0B5xK6oa-SqivVGdNdzVFZ1NGc1k/edit?usp=sharing).
 Written by [@dustinsoftware](http://twitter.com/dustinsoftware).
 
 This app will automatically schedule open matches in your Challonge tournament bracket and assign them to the next open station.  The priority is determined by waiting time: the person that has waited the longest will be placed on the next available station.
