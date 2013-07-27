@@ -69,7 +69,7 @@ namespace Challonge
 			int winnersFinals = totalMatchesCollection.Count == 0 ? 0 : totalMatchesCollection.Max(x => x.round);
 			int losersFinals = totalMatchesCollection.Count == 0 ? 0 : totalMatchesCollection.Min(x => x.round);
 
-			IEnumerable<ChallongeClient.Match> openMatches = m_client.GetMatches("open");
+			IEnumerable<ChallongeClient.Match> openMatches = totalMatchesCollection.Where(x => x.state == "open");
 			ReadOnlyCollection<ChallongeClient.Match> openMatchesCollection = openMatches == null ? null :
 				new ReadOnlyCollection<ChallongeClient.Match>(openMatches
 					.OrderBy(x => x.started_at).ToList());

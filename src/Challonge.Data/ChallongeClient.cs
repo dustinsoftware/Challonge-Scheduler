@@ -22,7 +22,7 @@ namespace Challonge.Data
 
 		public IEnumerable<Match> GetMatches(string state)
 		{
-			s_log.Info("GetMatches called.");
+			s_log.InfoFormat("GetMatches({0}) called.", state);
 			var result = m_client.Get<List<MatchResult>>(new RestRequest(string.Format("matches.json?state={0}", state) + s_apiKeyString));
 
 			if (result.ResponseStatus != ResponseStatus.Completed || result.StatusCode != HttpStatusCode.OK)
@@ -36,10 +36,8 @@ namespace Challonge.Data
 
 		public Participant GetParticipant(int playerId)
 		{
-			s_log.Info("GetParticipant called.");
 			lock (m_lock)
 			{
-				s_log.Info("Exclusive lock acquired.");
 				Participant participant;
 				if (!m_participants.TryGetValue(playerId, out participant))
 				{
@@ -70,6 +68,7 @@ namespace Challonge.Data
 			public int round { get; set; }
 			public int id { get; set; }
 			public DateTime started_at { get; set; }
+			public string state { get; set; }
 		}
 
 		public class MatchResult
