@@ -9,6 +9,8 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using Challonge.Data;
 using Challonge.Properties;
+using log4net;
+using log4net.Config;
 using Timer = System.Timers.Timer;
 
 namespace Challonge
@@ -22,6 +24,10 @@ namespace Challonge
 		{
 			InitializeComponent();
 
+			XmlConfigurator.Configure();
+
+			s_log.Info("Starting up.");
+
 			m_client = new ChallongeClient();
 
 			Task.Factory.StartNew(() => OnTimerElapsed(null, null));
@@ -30,6 +36,7 @@ namespace Challonge
 			m_timer.Elapsed += OnTimerElapsed;
 			m_timer.Start();
 
+			s_log.InfoFormat("Creating {0} stations.", Settings.Default.Stations);
 			m_stations = Enumerable.Range(0, Settings.Default.Stations)
 				.Select((x, i) => new Station { Id = i + 1 })
 				.ToList();
@@ -52,6 +59,7 @@ namespace Challonge
 			IEnumerable<ChallongeClient.Match> totalMatches = m_client.GetMatches("all");
 			if (totalMatches == null)
 			{
+				s_log.Error("Unable to get all matches.");
 				Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => StatusEllipse.Fill = new SolidColorBrush(Color.FromRgb(255, 0, 0))));
 				m_busy = false;
 				return;
@@ -68,6 +76,7 @@ namespace Challonge
 
 			if (openMatchesCollection == null || openMatchesCollection.Any(x => m_client.GetParticipant(x.player1_id) == null || m_client.GetParticipant(x.player2_id) == null))
 			{
+				s_log.ErrorFormat("Unable to retrieve matches or participants.  Matches: {0}", openMatchesCollection);
 				Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => StatusEllipse.Fill = new SolidColorBrush(Color.FromRgb(255, 0, 0))));
 				m_busy = false;
 				return;
@@ -122,6 +131,8 @@ namespace Challonge
 			}), matchStrings);
 
 			m_busy = false;
+
+			s_log.Info("Update finished normally.");
 		}
 
 		private static string GetRoundString(int round, int winnersFinals, int losersFinals)
@@ -160,6 +171,8 @@ namespace Challonge
 		{
 			return round >= winnersFinal - 1 || round <= losersFinal;
 		}
+
+		static readonly ILog s_log = LogManager.GetLogger(typeof(MainWindow));
 
 		readonly Timer m_timer;
 		readonly ChallongeClient m_client;

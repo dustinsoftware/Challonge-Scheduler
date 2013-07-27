@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using Challonge.Data.Properties;
+using log4net;
 using RestSharp;
 
 namespace Challonge.Data
@@ -11,6 +12,7 @@ namespace Challonge.Data
 	{
 		public ChallongeClient()
 		{
+			s_log.Info("ChallongeClient constructed.");
 			m_client = new RestClient
 			{
 				BaseUrl = Settings.Default.BaseUri + Settings.Default.TournamentId + "/",
@@ -20,26 +22,43 @@ namespace Challonge.Data
 
 		public IEnumerable<Match> GetMatches(string state)
 		{
+			s_log.Info("GetMatches called.");
 			var result = m_client.Get<List<MatchResult>>(new RestRequest(string.Format("matches.json?state={0}", state) + s_apiKeyString));
-			return result.ResponseStatus != ResponseStatus.Completed || result.StatusCode != HttpStatusCode.OK ?
-				null :
-				result.Data.Select(x => x.match);
+
+			if (result.ResponseStatus != ResponseStatus.Completed || result.StatusCode != HttpStatusCode.OK)
+			{
+				s_log.ErrorFormat("Unexpected response: {0}, status: {1}", result.StatusCode, result.ResponseStatus);
+				return null;
+			}
+
+			return result.Data.Select(x => x.match);
 		}
 
 		public Participant GetParticipant(int playerId)
 		{
+			s_log.Info("GetParticipant called.");
 			lock (m_lock)
 			{
+				s_log.Info("Exclusive lock acquired.");
 				Participant participant;
 				if (!m_participants.TryGetValue(playerId, out participant))
 				{
-					var response = m_client.Get<ParticipantResult>(new RestRequest(string.Format("participants/{0}.json?state=open{1}", playerId, s_apiKeyString))).Data;
-					if (response != null)
+					s_log.InfoFormat("Unknown participant {0}", playerId);
+					var result = m_client.Get<ParticipantResult>(new RestRequest(string.Format("participants/{0}.json?state=open{1}", playerId, s_apiKeyString)));
+					if (result.StatusCode == HttpStatusCode.OK)
 					{
-						participant = response.participant;
+						participant = result.Data.participant;
 						m_participants.Add(playerId, participant);
 					}
+					else
+					{
+						s_log.WarnFormat("Unexpected response: {0}, status: {1}", result.StatusCode, result.ResponseStatus);
+					}
 				}
+
+				if (participant == null)
+					s_log.ErrorFormat("Participant {0} not found!", playerId);
+
 				return participant;
 			}
 		}
@@ -83,6 +102,7 @@ namespace Challonge.Data
 		}
 
 		static readonly string s_apiKeyString = "&api_key=" + Settings.Default.ApiKey;
+		static ILog s_log = LogManager.GetLogger(typeof(ChallongeClient));
 
 		readonly RestClient m_client;
 		readonly object m_lock = new object();
