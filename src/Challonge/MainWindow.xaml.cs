@@ -57,6 +57,7 @@ namespace Challonge
 			Dispatcher.Invoke(DispatcherPriority.Normal, new Action(() => StatusEllipse.Fill = new SolidColorBrush(Color.FromRgb(255, 255, 0))));
 
 			IEnumerable<ChallongeClient.Match> totalMatches = m_client.GetMatches("all");
+			var totalMatchesCollection = new ReadOnlyCollection<ChallongeClient.Match>(totalMatches.ToList());
 			if (totalMatches == null)
 			{
 				s_log.Error("Unable to get all matches.");
@@ -65,9 +66,8 @@ namespace Challonge
 				return;
 			}
 
-			var totalMatchesCollection = new ReadOnlyCollection<ChallongeClient.Match>(totalMatches.ToList());
-			int winnersFinals = totalMatchesCollection.Max(x => x.round);
-			int losersFinals = totalMatchesCollection.Min(x => x.round);
+			int winnersFinals = totalMatchesCollection.Count == 0 ? 0 : totalMatchesCollection.Max(x => x.round);
+			int losersFinals = totalMatchesCollection.Count == 0 ? 0 : totalMatchesCollection.Min(x => x.round);
 
 			IEnumerable<ChallongeClient.Match> openMatches = m_client.GetMatches("open");
 			ReadOnlyCollection<ChallongeClient.Match> openMatchesCollection = openMatches == null ? null :
