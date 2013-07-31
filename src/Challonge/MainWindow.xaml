@@ -17,5 +17,8 @@
 		<Viewbox Grid.RowSpan="2">
 			<TextBlock Margin="10,10,10,10" x:Name="Matches"/>
 		</Viewbox>
+        <Button Click="Exit_OnClick" VerticalAlignment="Bottom" HorizontalAlignment="Right"  Height="20px" Width="80px" Grid.Row="1">
+            Exit
+        </Button>
 	</Grid>
 </Window>

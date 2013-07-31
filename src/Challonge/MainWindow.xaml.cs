@@ -48,6 +48,12 @@ namespace Challonge
 			base.OnClosed(e);
 		}
 
+        protected void Exit_OnClick(Object sender, EventArgs e)
+        {
+            m_timer.Dispose();
+            Environment.Exit(0);
+        }
+
 		private void OnTimerElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
 		{
 			if (m_busy)
